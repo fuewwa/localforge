@@ -1,0 +1,29 @@
+{% extends "repo.html" %}
+{% block repo_body %}
+{% if state == 'importing' %}
+  <div class="empty" data-poll="{{ url_for('pages.status', name=info.name) }}">
+    <p>This repository is being imported. The page reloads when it is ready.</p>
+  </div>
+{% elif state == 'failed' %}
+  <p class="notice error" role="alert">The import failed: {{ info.error or 'unknown error' }}</p>
+{% elif state == 'empty' %}
+  <div class="empty"><p>There are no commits yet.</p></div>
+{% else %}
+  <div class="toolbar">
+    {{ ref_select(url_for('pages.logs', name=info.name)) }}
+  </div>
+  <ol class="commits">
+    {% for c in commits %}
+    <li>
+      <a class="summary" href="{{ url_for('pages.commit', name=info.name, oid=c.id, **rq) }}">{{ c.summary or '(no message)' }}</a>
+      <p class="meta">{{ c.author }} committed <time title="{{ c.time|stamp(c.offset // 60) }}">{{ c.time|ago }}</time></p>
+      <a class="hash" href="{{ url_for('pages.commit', name=info.name, oid=c.id, **rq) }}">{{ c.id[:10] }}</a>
+    </li>
+    {% endfor %}
+  </ol>
+  <nav class="pager">
+    {% if page > 1 %}<a href="{{ url_for('pages.logs', name=info.name, page=page - 1, **rq) }}">Newer</a>{% endif %}
+    {% if more %}<a href="{{ url_for('pages.logs', name=info.name, page=page + 1, **rq) }}">Older</a>{% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "repo.html" %}
+{% block repo_body %}
+{% if state == 'importing' %}
+  <div class="empty" data-poll="{{ url_for('pages.status', name=info.name) }}">
+    <p>This repository is being imported. The page reloads when it is ready.</p>
+  </div>
+{% elif state == 'failed' %}
+  <p class="notice error" role="alert">The import failed: {{ info.error or 'unknown error' }}</p>
+  <p class="muted">Delete this repository in settings and try again.</p>
+{% elif state == 'empty' %}
+  <div class="empty">
+    <p>This repository is empty. Push an existing project to it:</p>
+    <pre class="snippet">git remote add origin {{ clone_url }}
+git push -u origin {{ info.branch or 'main' }}</pre>
+    <p class="muted">Or start from scratch:</p>
+    <pre class="snippet">git clone {{ clone_url }}</pre>
+  </div>
+{% else %}
+  <div class="toolbar">
+    {{ ref_select(url_for('pages.preview', name=info.name)) }}
+    <div class="crumbs">
+      <a href="{{ url_for('pages.preview', name=info.name, **rq) }}">{{ info.name }}</a>
+      {% for label, p in crumbs %}
+        <span class="sep">/</span>
+        <a href="{{ url_for('pages.preview', name=info.name, path=p, **rq) }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <div class="clone">
+      <input readonly value="{{ clone_url }}" aria-label="Clone URL">
+      <button type="button" data-copy="{{ clone_url }}">Copy</button>
+    </div>
+  </div>
+
+  {% if kind == 'tree' %}
+    <table class="files">
+      {% if path %}
+      <tr><td colspan="2"><a href="{{ url_for('pages.preview', name=info.name, path=path.rsplit('/', 1)[0] if '/' in path else '', **rq) }}">..</a></td></tr>
+      {% endif %}
+      {% for e in entries %}
+      <tr>
+        <td class="kind-{{ e.kind }}">
+          {% if e.kind == 'submodule' %}
+            {{ e.name }}
+          {% else %}
+            <a href="{{ url_for('pages.preview', name=info.name, path=(path + '/' + e.name) if path else e.name, **rq) }}">{{ e.name }}{% if e.kind == 'tree' %}/{% endif %}</a>
+          {% endif %}
+        </td>
+        <td class="size">{% if e.kind == 'blob' %}{{ e.size|size }}{% elif e.kind == 'submodule' %}submodule{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="2" class="muted">This directory is empty.</td></tr>
+      {% endfor %}
+    </table>
+    {% if readme %}
+    <section class="readme">
+      <h2>{{ readme[0] }}</h2>
+      <pre>{{ readme[1] }}</pre>
+    </section>
+    {% endif %}
+  {% elif kind == 'blob' %}
+    <section class="file">
+      <div class="file-head">
+        <span>{{ file.size|size }}</span>
+        <a href="{{ url_for('pages.raw', name=info.name, path=path, **rq) }}">raw</a>
+      </div>
+      {% if image %}
+        <div class="image"><img src="{{ url_for('pages.raw', name=info.name, path=path, **rq) }}" alt="{{ path }}"></div>
+      {% elif file.binary %}
+        <p class="muted pad">Binary file, not shown.</p>
+      {% else %}
+        <div class="code">
+          <pre class="gutter" aria-hidden="true">{% for n in range(1, line_count + 1) %}{{ n }}
+{% endfor %}</pre>
+          <pre class="source">{{ text }}</pre>
+        </div>
+        {% if file.truncated %}<p class="muted pad">Showing the first {{ text|length|size }} of {{ file.size|size }}. Use raw to see everything.</p>{% endif %}
+      {% endif %}
+    </section>
+  {% else %}
+    <p class="muted">Submodules are not browsable here.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

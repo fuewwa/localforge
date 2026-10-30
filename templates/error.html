@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<section class="empty">
+  <h1>{{ code }} {{ title }}</h1>
+  <p>{{ message }}</p>
+  <p><a href="{{ url_for('pages.index') }}">Back to repositories</a></p>
+</section>
+{% endblock %}

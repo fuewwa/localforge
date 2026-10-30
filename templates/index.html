@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <h1>Repositories</h1>
+  <p class="muted">{{ repos|length }} stored in the local database</p>
+</section>
+
+{% if error %}<p class="notice error" role="alert">{{ error }}</p>{% endif %}
+
+{% if repos %}
+<ul class="repo-list">
+  {% for r in repos %}
+  <li>
+    <div class="row">
+      <a class="repo-name" href="{{ url_for('pages.repo', name=r.name) }}">{{ r.name }}</a>
+      {% if r.status == 'importing' %}
+        <span class="badge busy" data-poll="{{ url_for('pages.status', name=r.name) }}">importing</span>
+      {% elif r.status == 'failed' %}
+        <span class="badge fail">import failed</span>
+      {% elif r.empty %}
+        <span class="badge">empty</span>
+      {% endif %}
+    </div>
+    <p class="repo-desc">{{ r.description or 'No description' }}</p>
+    <p class="repo-meta">{% if r.branch %}default branch {{ r.branch }}, {% endif %}updated {{ r.updated|ago }}</p>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  <p>No repositories yet. Create an empty one below, or import an existing repository from a URL or a folder on this machine.</p>
+</div>
+{% endif %}
+
+<section class="forms">
+  <details {% if not repos %}open{% endif %}>
+    <summary>Create a repository</summary>
+    <form method="post" action="{{ url_for('pages.new') }}">
+      <label>Name <input name="name" required maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9_\-]*" autocomplete="off"></label>
+      <label>Description <input name="description" maxlength="500"></label>
+      <label>Default branch <input name="branch" value="main" maxlength="100"></label>
+      <button type="submit">Create repository</button>
+    </form>
+  </details>
+  <details>
+    <summary>Import a repository</summary>
+    <form method="post" action="{{ url_for('pages.import_repo') }}">
+      <label>Name <input name="name" required maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9_\-]*" autocomplete="off"></label>
+      <label>Source URL or path <input name="source" required placeholder="https://example.org/project.git or /home/me/project"></label>
+      <label>Description <input name="description" maxlength="500"></label>
+      <button type="submit">Start import</button>
+    </form>
+  </details>
+</section>
+{% endblock %}

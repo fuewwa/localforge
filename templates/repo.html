@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ info.name }}{% endblock %}
+{% macro ref_select(base) %}
+  {% if refs %}
+  <select class="ref-select" data-ref data-base="{{ base }}" aria-label="Branch or tag">
+    <optgroup label="Branches">
+      {% for b in refs.branches %}<option value="{{ b }}" {% if b == ref %}selected{% endif %}>{{ b }}</option>{% endfor %}
+    </optgroup>
+    {% if refs.tags %}
+    <optgroup label="Tags">
+      {% for t in refs.tags %}<option value="{{ t }}" {% if t == ref %}selected{% endif %}>{{ t }}</option>{% endfor %}
+    </optgroup>
+    {% endif %}
+    {% if ref not in refs.branches and ref not in refs.tags %}
+    <option value="{{ ref }}" selected>{{ ref[:10] }}</option>
+    {% endif %}
+  </select>
+  {% endif %}
+{% endmacro %}
+{% block body %}
+<section class="repo-head">
+  <h1>{{ info.name }}</h1>
+  <p class="muted">{{ info.description or 'No description' }}</p>
+</section>
+<nav class="tabs" aria-label="Repository">
+  <a href="{{ url_for('pages.index') }}">home</a>
+  <a href="{{ url_for('pages.preview', name=info.name, **rq) }}" {% if tab == 'preview' %}class="active" aria-current="page"{% endif %}>preview</a>
+  <a href="{{ url_for('pages.logs', name=info.name, **rq) }}" {% if tab == 'logs' %}class="active" aria-current="page"{% endif %}>logs</a>
+  <a class="push-right{% if tab == 'settings' %} active{% endif %}" href="{{ url_for('pages.settings', name=info.name) }}">settings</a>
+</nav>
+{% block repo_body %}{% endblock %}
+{% endblock %}

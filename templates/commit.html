@@ -1,0 +1,38 @@
+{% extends "repo.html" %}
+{% block title %}{{ detail.info.summary }}{% endblock %}
+{% block repo_body %}
+<section class="commit">
+  <h2>{{ detail.info.summary or '(no message)' }}</h2>
+  {% set body = detail.info.message[detail.info.summary|length:].strip() %}
+  {% if body %}<pre class="message">{{ body }}</pre>{% endif %}
+  <p class="meta">
+    {{ detail.info.author }} &lt;{{ detail.info.email }}&gt; on {{ detail.info.time|stamp(detail.info.offset // 60) }}
+  </p>
+  <p class="meta">commit <span class="hash">{{ detail.info.id }}</span></p>
+  {% if detail.info.parents %}
+  <p class="meta">parent
+    {% for p in detail.info.parents %}<a class="hash" href="{{ url_for('pages.commit', name=info.name, oid=p, **rq) }}">{{ p[:10] }}</a>{% endfor %}
+  </p>
+  {% endif %}
+</section>
+
+<table class="changes">
+  {% for f in detail.files %}
+  <tr>
+    <td class="status status-{{ f.status }}">{{ f.status }}</td>
+    <td>{{ f.path }}{% if f.status == 'renamed' %} <span class="muted">from {{ f.old_path }}</span>{% endif %}</td>
+    <td class="stat">{% if f.binary %}binary{% else %}<span class="plus">+{{ f.additions }}</span> <span class="minus">-{{ f.deletions }}</span>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td class="muted">No file changes.</td></tr>
+  {% endfor %}
+</table>
+
+{% if lines %}
+<div class="diff" role="region" aria-label="Patch" tabindex="0">
+{% for kind, text in lines %}<span class="d-{{ kind }}">{{ text }}</span>
+{% endfor %}</div>
+{% if detail.truncated %}<p class="muted">The patch is larger than the display limit and was cut off.</p>{% endif %}
+{% endif %}
+<p><a href="{{ url_for('pages.logs', name=info.name, **rq) }}">Back to logs</a></p>
+{% endblock %}
