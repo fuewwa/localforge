@@ -1,6 +1,13 @@
+# output
 __pycache__/
 *.pyc
 *.so
 *.pyd
 build/
 data/
+
+# enviroments
+.vscode/
+.DS_Store
+*sublime*
+.idea/
